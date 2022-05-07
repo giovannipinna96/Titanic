@@ -1,5 +1,3 @@
-
-
 def clf_performance(classifier, model_name):
     print(model_name)
     print('Best Score: ' + str(classifier.best_score_))
