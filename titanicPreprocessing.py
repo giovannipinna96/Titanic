@@ -26,6 +26,10 @@ class preprocess:
         data['cabin_multiple'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else len(x.split(' ')))
         data['cabin_letter'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else str(x)[0])
         data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]', x)[0])))
+        data['name_title'] = data.name_title.apply(lambda x: 'Rare' if x not in ['Mr', 'Miss',
+                                                                                 'Mrs', 'Master', 'Dr', 'Rev']
+                                                                    else x
+                                                   )
 
         self.mean_Miss = self.data_train.Age[self.data_train['name_title'] == 'Miss'].mean()
         self.mean_Mr = self.data_train.Age[self.data_train['name_title'] == 'Mr'].mean()
