@@ -21,6 +21,7 @@ class preprocess:
         self.mean_Rev = None
         self.mean_male = None
         self.mean_female = None
+        self.mode_fare = data_train['Fare'].mean()
 
     def __extract_info_text(self, data):
         data['cabin_multiple'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else len(x.split(' ')))
@@ -77,7 +78,10 @@ class preprocess:
         self.data_train = self.__fillna_age(self.data_train)
         self.data_test = self.__fillna_age(self.data_test)
 
+        self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
+
         self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
+        self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
 
         self.data_train['Fare'] = self.sc_Fare.fit_transform(self.data_train[['Fare']])
         self.data_train['Age'] = self.sc_Age.fit_transform(self.data_train[['Age']])
