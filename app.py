@@ -126,7 +126,7 @@ results = dict([(1, 'Survived'), (0, 'Died')])
 st.write(f"##### Dear {title_name} {name} the machine learning model says that : ")
 st.write(f"##### Voting : {results.get(y_hat_voting_clf_best[0])}")
 st.write(f"##### The deep learning model gives you this chance of survival : {y_hat_model[0]}")
-
+st.write(y_hat_svc_best)
 st.write(f"SVM : {results.get(y_hat_svc_best[0])}")
 st.write(f"XG boosting : {results.get(y_hat_xgb_best[0])}")
 
