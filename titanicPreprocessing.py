@@ -26,7 +26,7 @@ class preprocess:
     def __extract_info_text(self, data):
         data['cabin_multiple'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else len(x.split(' ')))
         data['cabin_letter'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else str(x)[0])
-        data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]', x)[0])))
+        data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]*', x)[0])))
         data['name_title'] = data.name_title.apply(
             lambda x: 'Rare' if x not in ['Mr', 'Miss', 'Mrs', 'Master', 'Dr', 'Rev'] else x)
 
@@ -87,6 +87,14 @@ class preprocess:
             self.data_test['Age'] = self.sc_Age.transform(self.data_test[['Age']])
             self.data_test = self.__create_dummy(self.data_test)
 
+    def __process_line(self):
+        self.data_train = self.__extract_info_text(self.data_train)
+        self.data_train = self.__drop_useless_col(self.data_train)
+        self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
+        self.data_train['Fare'] = self.sc_Fare.transform(self.data_train[['Fare']])
+        self.data_train['Age'] = self.sc_Age.transform(self.data_train[['Age']])
+        self.data_train = self.__create_dummy(self.data_train)
+
     def get_data_train(self):
         return self.data_train
 
@@ -98,3 +106,18 @@ class preprocess:
 
     def do_preprocess(self):
         self.__process_data()
+
+    def do_preprocess_for_line(self):
+        self.__process_line()
+
+    def set_sc_Age(self, sc_Age):
+        self.sc_Age = sc_Age
+
+    def set_sc_Fare(self, sc_Fare):
+        self.sc_Fare = sc_Fare
+
+    def get_sc_Fare(self):
+        return self.sc_Fare
+
+    def get_sc_Age(self):
+        return self.sc_Age
