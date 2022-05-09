@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 class preprocess:
-    def __init__(self, data_train, data_test):
+    def __init__(self, data_train, data_test=None):
         self.data_train = data_train
         self.data_test = data_test
 
@@ -21,11 +21,14 @@ class preprocess:
         self.mean_Rev = None
         self.mean_male = None
         self.mean_female = None
+        self.mode_fare = data_train['Fare'].mean()
 
     def __extract_info_text(self, data):
         data['cabin_multiple'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else len(x.split(' ')))
         data['cabin_letter'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else str(x)[0])
-        data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]', x)[0])))
+        data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]*', x)[0])))
+        data['name_title'] = data.name_title.apply(
+            lambda x: 'Rare' if x not in ['Mr', 'Miss', 'Mrs', 'Master', 'Dr', 'Rev'] else x)
 
         self.mean_Miss = self.data_train.Age[self.data_train['name_title'] == 'Miss'].mean()
         self.mean_Mr = self.data_train.Age[self.data_train['name_title'] == 'Mr'].mean()
@@ -38,7 +41,8 @@ class preprocess:
 
         return data
 
-    def __drop_useless_col(self, data):
+    @staticmethod
+    def __drop_useless_col(data):
         data.dropna(subset=['Embarked'], inplace=True)
         data.drop(columns=['Ticket', 'Cabin', 'Name'], inplace=True)
 
@@ -57,7 +61,8 @@ class preprocess:
 
         return data
 
-    def __create_dummy(self, data):
+    @staticmethod
+    def __create_dummy(data):
         all_dummy = pd.get_dummies(data)
         return all_dummy
 
@@ -72,8 +77,10 @@ class preprocess:
 
         self.data_train = self.__fillna_age(self.data_train)
         self.data_test = self.__fillna_age(self.data_test)
+        self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
 
         self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
+        self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
 
         self.data_train['Fare'] = self.sc_Fare.fit_transform(self.data_train[['Fare']])
         self.data_train['Age'] = self.sc_Age.fit_transform(self.data_train[['Age']])
@@ -83,6 +90,14 @@ class preprocess:
 
         self.data_train = self.__create_dummy(self.data_train)
         self.data_test = self.__create_dummy(self.data_test)
+
+    def __process_line(self):
+        self.data_train = self.__extract_info_text(self.data_train)
+        self.data_train = self.__drop_useless_col(self.data_train)
+        self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
+        self.data_train['Fare'] = self.sc_Fare.transform(self.data_train[['Fare']])
+        self.data_train['Age'] = self.sc_Age.transform(self.data_train[['Age']])
+        self.data_train = self.__create_dummy(self.data_train)
 
     def get_data_train(self):
         return self.data_train
@@ -95,3 +110,18 @@ class preprocess:
 
     def do_preprocess(self):
         self.__process_data()
+
+    def do_preprocess_for_line(self):
+        self.__process_line()
+
+    def set_sc_Age(self, sc_Age):
+        self.sc_Age = sc_Age
+
+    def set_sc_Fare(self, sc_Fare):
+        self.sc_Fare = sc_Fare
+
+    def get_sc_Fare(self):
+        return self.sc_Fare
+
+    def get_sc_Age(self):
+        return self.sc_Age
