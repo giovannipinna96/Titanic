@@ -70,22 +70,26 @@ class preprocess:
         self.data_train.drop_duplicates()
 
         self.data_train = self.__extract_info_text(self.data_train)
+        self.data_test = self.__extract_info_text(self.data_test)
+
         self.data_train = self.__drop_useless_col(self.data_train)
+        self.data_test = self.__drop_useless_col(self.data_test)
+
         self.data_train = self.__fillna_age(self.data_train)
+        self.data_test = self.__fillna_age(self.data_test)
+        self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
+
         self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
+        self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
+
         self.data_train['Fare'] = self.sc_Fare.fit_transform(self.data_train[['Fare']])
         self.data_train['Age'] = self.sc_Age.fit_transform(self.data_train[['Age']])
-        self.data_train = self.__create_dummy(self.data_train)
 
-        if self.data_test is not None:
-            self.data_test = self.__extract_info_text(self.data_test)
-            self.data_test = self.__drop_useless_col(self.data_test)
-            self.data_test = self.__fillna_age(self.data_test)
-            self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
-            self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
-            self.data_test['Fare'] = self.sc_Fare.transform(self.data_test[['Fare']])
-            self.data_test['Age'] = self.sc_Age.transform(self.data_test[['Age']])
-            self.data_test = self.__create_dummy(self.data_test)
+        self.data_test['Fare'] = self.sc_Fare.transform(self.data_test[['Fare']])
+        self.data_test['Age'] = self.sc_Age.transform(self.data_test[['Age']])
+
+        self.data_train = self.__create_dummy(self.data_train)
+        self.data_test = self.__create_dummy(self.data_test)
 
     def __process_line(self):
         self.data_train = self.__extract_info_text(self.data_train)
