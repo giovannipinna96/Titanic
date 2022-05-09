@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 class preprocess:
-    def __init__(self, data_train, data_test):
+    def __init__(self, data_train, data_test=None):
         self.data_train = data_train
         self.data_test = data_test
 
@@ -27,10 +27,8 @@ class preprocess:
         data['cabin_multiple'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else len(x.split(' ')))
         data['cabin_letter'] = data.Cabin.apply(lambda x: 0 if pd.isna(x) else str(x)[0])
         data['name_title'] = data.Name.apply(lambda x: re.sub('[.]', '', str(re.findall('[a-zA-Z]+[.]', x)[0])))
-        data['name_title'] = data.name_title.apply(lambda x: 'Rare' if x not in ['Mr', 'Miss',
-                                                                                 'Mrs', 'Master', 'Dr', 'Rev']
-                                                                    else x
-                                                   )
+        data['name_title'] = data.name_title.apply(
+            lambda x: 'Rare' if x not in ['Mr', 'Miss', 'Mrs', 'Master', 'Dr', 'Rev'] else x)
 
         self.mean_Miss = self.data_train.Age[self.data_train['name_title'] == 'Miss'].mean()
         self.mean_Mr = self.data_train.Age[self.data_train['name_title'] == 'Mr'].mean()
@@ -43,7 +41,8 @@ class preprocess:
 
         return data
 
-    def __drop_useless_col(self, data):
+    @staticmethod
+    def __drop_useless_col(data):
         data.dropna(subset=['Embarked'], inplace=True)
         data.drop(columns=['Ticket', 'Cabin', 'Name'], inplace=True)
 
@@ -62,7 +61,8 @@ class preprocess:
 
         return data
 
-    def __create_dummy(self, data):
+    @staticmethod
+    def __create_dummy(data):
         all_dummy = pd.get_dummies(data)
         return all_dummy
 
@@ -70,27 +70,22 @@ class preprocess:
         self.data_train.drop_duplicates()
 
         self.data_train = self.__extract_info_text(self.data_train)
-        self.data_test = self.__extract_info_text(self.data_test)
-
         self.data_train = self.__drop_useless_col(self.data_train)
-        self.data_test = self.__drop_useless_col(self.data_test)
-
         self.data_train = self.__fillna_age(self.data_train)
-        self.data_test = self.__fillna_age(self.data_test)
-
-        self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
-
         self.data_train['Fare'] = self.data_train['Fare'] = np.log(self.data_train.Fare + 1)
-        self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
-
         self.data_train['Fare'] = self.sc_Fare.fit_transform(self.data_train[['Fare']])
         self.data_train['Age'] = self.sc_Age.fit_transform(self.data_train[['Age']])
-
-        self.data_test['Fare'] = self.sc_Fare.transform(self.data_test[['Fare']])
-        self.data_test['Age'] = self.sc_Age.transform(self.data_test[['Age']])
-
         self.data_train = self.__create_dummy(self.data_train)
-        self.data_test = self.__create_dummy(self.data_test)
+
+        if self.data_test is not None:
+            self.data_test = self.__extract_info_text(self.data_test)
+            self.data_test = self.__drop_useless_col(self.data_test)
+            self.data_test = self.__fillna_age(self.data_test)
+            self.data_test['Fare'] = self.data_test['Fare'].fillna(self.mode_fare)
+            self.data_test['Fare'] = self.data_test['Fare'] = np.log(self.data_test.Fare + 1)
+            self.data_test['Fare'] = self.sc_Fare.transform(self.data_test[['Fare']])
+            self.data_test['Age'] = self.sc_Age.transform(self.data_test[['Age']])
+            self.data_test = self.__create_dummy(self.data_test)
 
     def get_data_train(self):
         return self.data_train
